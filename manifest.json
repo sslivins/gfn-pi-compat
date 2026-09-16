@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "GFN Pi Compat (Experimental)",
+  "version": "0.1.0",
+  "description": "Experimental, site-scoped GFN HEVC eligibility override. Does not spoof decoder capabilities.",
+  "minimum_chrome_version": "111",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "GFN Pi Compat diagnostics"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://play.geforcenow.com/*"],
+      "js": ["main.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    },
+    {
+      "matches": ["https://play.geforcenow.com/*"],
+      "js": ["status.js"],
+      "run_at": "document_start",
+      "world": "ISOLATED",
+      "all_frames": false
+    }
+  ]
+}

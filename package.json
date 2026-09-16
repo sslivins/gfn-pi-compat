@@ -1,0 +1,11 @@
+{
+  "name": "gfn-pi-compat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Experimental site-scoped Chromium GFN HEVC eligibility extension",
+  "scripts": {
+    "test": "node --test",
+    "package": "python tools/package.py"
+  },
+  "engines": { "node": ">=22" }
+}

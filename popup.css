@@ -1,0 +1,5 @@
+body { width: 320px; margin: 16px; font: 14px/1.45 system-ui, sans-serif; color: #202124; }
+h1 { font-size: 19px; }
+button { margin: 4px 0; padding: 7px; width: 100%; }
+#status { font-weight: 600; }
+#reason { overflow-wrap: anywhere; }
