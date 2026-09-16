@@ -6,13 +6,20 @@ not by spoofing browser or decoder capabilities.
 
 ## Status and limits
 
-The underlying document-start override was validated via CDP on Chromium
-**152.0.7977.75**, GFN **2.0.88.129**, with real H.265 V4L2 decoding at
-**1080p60**. The packaged extension has also applied successfully on Pi 5 with
-that browser running as a normal user with namespace and Seccomp sandboxing:
-GFN's real capability checks returned H.265 and H.264. Gameplay with the
-packaged extension is still awaiting validation. A real Chromium integration
-fixture also exercised document-start injection under strict page CSP.
+On September 16, 2026, the extension streamed **LEGO Bricktales Demo** on Pi 5
+with Chromium **152.0.7977.75** and GFN **2.0.88.129**, running as a normal user
+with namespace and Seccomp sandboxing enabled. WebRTC reported **H.265 Main**,
+**1920x1080 at approximately 60 fps**, and
+`ExternalDecoder (V4L2VideoDecoder)` with `powerEfficientDecoder=true`.
+Over 121.6 seconds, 7,261 additional frames were decoded with no freezes and
+no additional drops; 26 startup drops had occurred before that interval.
+The remote-control screencast was off during capture.
+
+This validates live streaming, including menus, not an interactive gameplay
+or controller acceptance test. The diagnostic session also needed a temporary
+Wayland keyboard-state workaround for a separate browser startup crash;
+that is not implemented by this extension. A real Chromium integration fixture
+also exercised document-start injection under strict page CSP.
 4K60 and HDR are future appliance goals, **not supported/validated claims**.
 GFN updates can break the private module contract at any time.
 
