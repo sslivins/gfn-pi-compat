@@ -1,111 +1,75 @@
 # GFN Pi Compat (experimental)
 
-Standalone Chromium Manifest V3 extension for **https://play.geforcenow.com/**
-only. It enables GFN's HEVC eligibility policy via the known settings module,
-not by spoofing browser or decoder capabilities.
+A Chromium extension that enables GeForce NOW's **H.265/HEVC eligibility**
+on Raspberry Pi. It runs only on `https://play.geforcenow.com/` and does not
+add decoder support or spoof browser capabilities.
 
-## Status and limits
+## Requirements
 
-On September 16, 2026, the extension streamed **LEGO Bricktales Demo** on Pi 5
-with Chromium **152.0.7977.75** and GFN **2.0.88.129**, running as a normal user
-with namespace and Seccomp sandboxing enabled. WebRTC reported **H.265 Main**,
-**1920x1080 at approximately 60 fps**, and
-`ExternalDecoder (V4L2VideoDecoder)` with `powerEfficientDecoder=true`.
-Over 121.6 seconds, 7,261 additional frames were decoded with no freezes and
-no additional drops; 26 startup drops had occurred before that interval.
-The remote-control screencast was off during capture.
+- Raspberry Pi 5 / CM5 with a compatible 64-bit OS and graphics stack.
+- HEVC-capable Chromium, such as
+  [chromium-rpi-hevc v0.4.1 (Chromium 152.0.7977.82)](https://github.com/sslivins/chromium-rpi-hevc/releases/tag/v0.4.1).
+  Use the matching `chromium`, `chromium-common`, `chromium-sandbox` and
+  `chromium-l10n` packages from that release; see its OS requirements.
+- A GeForce NOW account and the membership/access required for your games.
 
-This validates live streaming, including menus, not an interactive gameplay
-or controller acceptance test. The diagnostic session also needed a temporary
-Wayland keyboard-state workaround for a separate browser startup crash;
-that is not implemented by this extension. A real Chromium integration fixture
-also exercised document-start injection under strict page CSP.
-4K60 and HDR are future appliance goals, **not supported/validated claims**.
-GFN updates can break the private module contract at any time.
+**[Cloudplay OS](https://github.com/sslivins/cloudplay-os) already bundles and
+automatically loads this extension.** No manual installation is needed there.
 
-## Load locally
+## Install manually
 
-1. Open `chrome://extensions`, enable Developer mode, choose **Load unpacked**.
-2. Select this directory (or extract the ZIP and select its root).
-3. Open/reload `https://play.geforcenow.com/`. Pin the extension for its popup.
+1. Download or clone this repository, or extract the packaged extension ZIP.
+2. Open `chrome://extensions`, enable **Developer mode**, and choose **Load unpacked**.
+3. Select the directory containing `manifest.json`, then open or reload
+   `https://play.geforcenow.com/`. Pin the extension to access its popup.
 
-For an experimental Chromium appliance, install the runtime files with
-`manifest.json` directly under **`/opt/gfn-pi-compat`**. All resources are
-relative to that root. Launch a *new* Chromium process with a dedicated profile:
+For command-line use, place the extension at `/opt/gfn-pi-compat`, with
+`manifest.json` at that directory's root. Close any browser using the dedicated
+profile before launching:
 
 ```sh
 chromium --user-data-dir="$HOME/.local/share/gfn-pi-profile" \
   --load-extension=/opt/gfn-pi-compat https://play.geforcenow.com/
 ```
 
-Use an actual Chromium build supporting command-line unpacked extensions;
-branded Chrome builds may restrict `--load-extension`. Close that dedicated
-profile's existing browser processes first, or startup flags may be ignored.
-No special decoder flags are supplied: provision and verify real decoder
-support separately. This is an experimental **loaded extension**, not a signed
-package, store distribution, kiosk lockdown, or complete Pi OS image.
+This requires Chromium support for unpacked extensions; branded Chrome may
+restrict `--load-extension`.
 
-**Disable:** popup → **Manage / disable extension** → toggle off in Chromium's
-extension UI, then reload every GFN tab (or restart the browser). Disabling alone
-does not undo code already run in a page. Remove the launch flag for future
-appliance launches if you no longer want to load the extension.
+## Check or disable
 
-## Intervention and diagnostics
+The popup reports **waiting**, **applied**, **incompatible**, **error** or
+**unknown**. If the override is not confirmed, reload the GFN page. Persistent
+failures may indicate that GFN has changed its internals.
 
-The declarative, top-frame `MAIN` content script runs at `document_start`,
-intercepts `window.webpackChunkgfn_mall`, preserves existing array entries, and
-wraps **only module 56123**. After the original factory returns, it requires an
-own callable `exports.configureOverrideSettings`, then calls:
+**Applied means the settings call returned, not that H.265 or hardware decoding
+is active.** Confirm the negotiated codec and decoder using Chromium
+WebRTC/media diagnostics during a stream.
 
-```js
-exports.configureOverrideSettings({ overrideData: "h265=1" });
-```
+To disable, use the popup's **Manage / disable extension** button, toggle the
+extension off, then reload every GFN tab or restart Chromium. For command-line
+installations, also remove the launch flag from future starts.
 
-Factory receiver, arguments, return value and thrown errors are preserved;
-override errors also propagate. No unknown-module scans, alternative patches,
-UA changes, authentication/entitlement bypasses, codec capability replacements,
-or forced stream negotiation. Other explicit GFN developer overrides may be
-affected by the site's settings API; do not combine this with unrelated
-override experiments.
+## Limitations and privacy
 
-The module/export guard is a compatibility check, **not a GFN version proof**.
-If the contract changes, hooks are blocked, or no successful invocation occurs
-within 45 seconds, status becomes incompatible/error and further override
-attempts stop until reload. Slow loading can therefore require a reload.
-Original site code still runs and retains its errors.
+- Experimental and dependent on GFN internals; service updates can break it.
+- 4K60, HDR output, and interactive gameplay/controller compatibility are not
+  validated claims.
+- No authentication or membership bypass. Keep Chromium's normal sandbox enabled.
+- No extension telemetry, network requests, stored data or requested API permissions.
+- Popup status is page-reported and advisory, not a security boundary.
+- Not affiliated with or endorsed by NVIDIA.
 
-An isolated-world script displays a dismissible, 15-second failure notice
-(including missing MAIN-world status after 47 seconds). The popup reports
-waiting/applied/incompatible/error/unknown. **Applied only means the settings
-call returned**, not negotiated H.265, hardware decode, HDR, 4K, or 60 fps.
-Verify actual sessions with Chromium WebRTC/media diagnostics and decoder
-telemetry; do not infer success from this popup.
+## Development
 
-## Security
+Requires Node.js 22+ and Python 3.10+. From the repository directory:
 
-No requested API permissions, background service, remote code, extension network
-requests, update URL, telemetry, storage, or externally connectable messaging.
-The only automatic page access is the exact HTTPS origin above, top frame only.
-The popup uses permission-free tab query/message/create operations; it does not
-read tab URLs. MAIN-world code shares the page's environment/CSP and is not
-isolated from page tampering. DOM status messages are strictly bounded advisory
-text; pages can forge them, hide warnings, or interfere with the hook. They never
-trigger privileged actions. This is not a security boundary or official NVIDIA
-software. Service/browser changes and service policies remain external risks.
-
-## Tests and reproducible artifact
-
-Requires Node.js 22+ and Python 3.10+, no dependency installation:
-
-```powershell
-cd C:\Users\stesli\code\gfn-pi-compat
+```sh
 npm test
 npm run package
 ```
 
-Equivalent direct commands: `node --test` and `python tools/package.py`.
-Output: `dist/gfn-pi-compat-0.1.0.zip` and matching `.zip.sha256`.
-Packaging allowlists runtime files plus this README, normalizes CRLF, fixes ZIP
-timestamps/modes/order, and uses uncompressed entries for deterministic bytes.
-The ZIP has `manifest.json` at its root. CI tests and uploads this artifact only;
-it does not publish releases or deploy anything.
+Packaging produces `dist/gfn-pi-compat-0.1.0.zip` and its `.zip.sha256`.
+[CI](https://github.com/sslivins/gfn-pi-compat/actions/workflows/ci.yml)
+uploads the unpacked-extension ZIP as an artifact; it does not publish releases.
+See [technical notes](https://github.com/sslivins/gfn-pi-compat/blob/main/docs/technical-notes.md)
+for the hook contract, security details and recorded measurements.
