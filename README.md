@@ -4,6 +4,23 @@ A Chromium extension that enables GeForce NOW's **H.265/HEVC eligibility**
 on Raspberry Pi. It runs only on `https://play.geforcenow.com/` and does not
 add decoder support or spoof browser capabilities.
 
+## How it works
+
+GeForce NOW has its own eligibility policy in addition to Chromium's codec
+support. The extension runs at page startup, waits for GFN's known settings
+module, and calls its existing override API with:
+
+```js
+configureOverrideSettings({ overrideData: "h265=1" });
+```
+
+This enables GFN's H.265 eligibility path before the site caches its capability
+decision. GFN still performs its normal browser, account and service checks and
+negotiates the actual stream. The extension does not implement a decoder, force
+H.265 selection, bypass membership or authentication, or claim unsupported
+hardware capabilities; compatible Chromium and Raspberry Pi video drivers
+provide the real HEVC decoding.
+
 ## Requirements
 
 - Raspberry Pi 5 / CM5 with a compatible 64-bit OS and graphics stack.
